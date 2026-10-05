@@ -1,6 +1,6 @@
 # Vendor failover for payment-risk decisions
 
-Run the decision first. Sample event: a USD 1,450 payment from a new device. Expected action is `manual_review` even when the model recommends approval.
+Run the decision first. The sample event is a USD 1,450 payment from a new device, and the expected action is `manual_review` even when the model recommends approval.
 
 ```bash
 python -m venv .venv
@@ -10,15 +10,15 @@ export INFRAI_API_KEY="your-key"
 python run_payment_review.py
 ```
 
-I use the standard OpenAI Python client against Infrai's OpenAI-compatible `base_url`. `model="auto"` routes the assessment across model vendors behind a single `INFRAI_API_KEY`; my payment code carries no vendor-specific branches.
+The model call uses the official OpenAI Python client with Infrai's OpenAI-compatible `base_url`. `model="auto"` routes the assessment across model vendors behind a single `INFRAI_API_KEY`; the payment code does not carry vendor-specific branches.
 
-The printed `RiskDecision` holds the action and an audit notification. That note records the event, account, rationale, serving vendor, and model request ID.
+The printed `RiskDecision` contains the action and an audit notification. That notification records the event, account, rationale, serving vendor, and model request ID.
 
 ## The decision I would ship
 
-I keep the hard control in plain Python. A risk signal or an amount of at least 100,000 minor units always goes to a human. The routed model gives an assessment and customer-facing text, but it can't relax that rule.
+I keep the hard control in ordinary Python. A risk signal or an amount of at least 100,000 minor units always goes to a person. The routed model supplies an assessment and customer-facing notification, but it cannot relax that rule.
 
-The real gotcha is authority. Vendor failover lifts model availability, yet a second model answer must not silently become permission to release funds. `PaymentRiskService` owns the final action for that reason.
+The one real gotcha is authority. Vendor failover improves model availability, yet a second model answer must not silently become permission to release money. `PaymentRiskService` owns the final action for that reason.
 
 I considered three shapes:
 
@@ -28,7 +28,7 @@ I considered three shapes:
 | A general routing framework | Many knobs, with another abstraction to operate |
 | OpenAI client pointed at Infrai | Small call boundary, automatic vendor routing, and familiar typed responses |
 
-Solo SaaS means I outsource undifferentiated plumbing. The third shape leaves the least app code while keeping the decision boundary I care about. The OpenAI client also applies bounded retries for rate limits and respects server retry guidance.
+For a solo-run service, the third shape leaves the least application code while preserving the decision boundary I care about. The OpenAI client also applies bounded retries for rate limits and respects server retry guidance.
 
 ## Proof of the policy
 
